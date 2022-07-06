@@ -1,0 +1,65 @@
+<head>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body>
+    <form name="test">
+        <h1>パワーグラフジェネレーター</h1>
+        周波数(Hz)<input type="number" id="hz"></input><br>
+        モード(SFFTの場合は1)<input type="number" id="mode" value="2"></input><br>
+        ファイル<input type="file" id="selfile"><br>
+    </form>
+    <div id="stage"></div>
+    <script>
+        let obj1 = document.getElementById("selfile");
+
+        //ダイアログでファイルが選択された時
+        obj1.addEventListener("change", function (evt) {
+
+            let file = evt.target.files;
+
+            //FileReaderの作成
+            let reader = new FileReader();
+            //テキスト形式で読み込む
+            reader.readAsText(file[0]);
+
+            //読込終了後の処理
+            reader.onload = function (ev) {
+                let dataarray = reader.result.split('\n');
+                console.log(document.getElementById("hz").value);
+                let roothz = (document.getElementById("hz").value != "")?Number(document.getElementById("hz").value)/(Number(document.getElementById("mode").value)*(dataarray.length-1)):1;
+                let data = [['周波数', 'パワー']];
+                for(let i=0; i<(dataarray.length-1)/2; i++){
+                    data.push([ roothz*i, Number(dataarray[i]) ]);
+                }
+                console.log(data);
+                drawGraph(data);
+            }
+        }, false);
+        function drawGraph(filedata) {
+            //必要なパッケージの読み込み
+            google.charts.load('current', { packages: ['corechart'] });
+            google.charts.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+                //オプション設定
+                let options = {
+                    'title': 'power graph',
+                    'width': window.innerWidth-100,
+                    'height': window.innerHeight-150
+                };
+
+                //月別データ
+                let data = google.visualization.arrayToDataTable(filedata);
+
+                let stage = document.getElementById('stage');
+
+                //グラフの種類を設定
+                let chart = new google.visualization.ColumnChart(stage);
+
+                //データとオプションを設定
+                chart.draw(data, options);
+            }
+        }
+    </script>
+</body>
